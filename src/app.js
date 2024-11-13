@@ -4,6 +4,34 @@ const app=express();
 const User=require('./models/user')
 app.use(express.json())
 
+app.get('/user',async (req,res)=>{
+   try{
+    const userEmail=req.body.emailId;
+    console.log(userEmail)
+    const user= await User.findOne({emailId:userEmail});
+    console.log(user)
+    res.send(user)
+
+   }catch(err){
+    res.status(404).send("something went wrong")
+   }
+
+
+})
+app.get('/feed',async (req,res)=>{
+    try{
+   
+     const user= await User.find({});
+     console.log(user)
+     res.send(user)
+ 
+    }catch(err){
+     res.status(404).send("something went wrong")
+    }
+ 
+ 
+ })
+
 app.post('/signup',async(req,res)=>{
     const user = new User (
         req.body
