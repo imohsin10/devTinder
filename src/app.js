@@ -18,6 +18,17 @@ app.get('/user',async (req,res)=>{
 
 
 })
+app.delete('/user',async (req,res)=>{
+   try {
+    Userid=req.body.serid
+    User.findByIdAndDelete(Userid);
+    //User.findByIdAndDelete({_id:Userid});
+res.send("data deleted successfully")
+
+   }catch(err){
+    res.send("something went wrong")
+   }
+})
 app.get('/feed',async (req,res)=>{
     try{
    
