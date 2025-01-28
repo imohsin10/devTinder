@@ -7,7 +7,6 @@ app.use(express.json())
 app.get('/user', async (req, res) => {
     try {
         const userEmail = req.body.emailId;
-        console.log(userEmail)
         const users = await User.findOne({ emailId: userEmail });
         if (!users) {
             res.status(404).send("user not found")
@@ -22,15 +21,15 @@ app.get('/user', async (req, res) => {
 })
 app.delete('/user', async (req, res) => {
     try {
-       const  Userid = req.body.userId
-       console.log(Userid)
-       const user= await User.findByIdAndDelete(Userid);
-       // User.findByIdAndDelete({_id:Userid});
+        const Userid = req.body.userId
+        console.log(Userid)
+        const user = await User.findByIdAndDelete(Userid);
+        // User.findByIdAndDelete({_id:Userid});
 
         res.send("data deleted successfully")
 
     } catch (err) {
-        res.send("something went wrong"+err.message)
+        res.send("something went wrong" + err.message)
     }
 })
 app.get('/feed', async (req, res) => {
@@ -45,16 +44,32 @@ app.get('/feed', async (req, res) => {
 
 
 })
-app.patch('/user',async (req,res)=>{
-    const userid=req.body.userId;
-    //const objectId = new mongoose.Types.ObjectId(userid);
-   try{
+app.patch('/user/:userId', async (req, res) => {
+    const userId = req.params.userId;
+    const data = req.body;
+    console.log(userId)
 
-    await User.findByIdAndUpdate({ _id:userid },req.body)
-    res.status(200).send("user updated successfully")
-   }catch(err){
-    res.status(404).send("something went wrong"+err.message)
-   }
+    try {
+
+        const ALLOWED_UPDATES = ["skills","age", "gender", "photoUrl", "aboutMe", "password", "firstName", "lastName",]
+
+        const isUpdateAllowed = Object.keys(data).every((k) =>
+            ALLOWED_UPDATES.includes(k)
+        );
+
+
+        if (!isUpdateAllowed) {
+            throw new Error("update not allowed")
+        }
+        if (data.skills?.length > 10) {
+          throw new Error ("skills cant be more than 10")
+        }
+        await User.findByIdAndUpdate({ _id: userId }, req.body, { runValidators: true })
+        console.log(req.body)
+        res.status(200).send("user updated successfully")
+    } catch (err) {
+        res.status(404).send("something went wrong " + err.message)
+    }
 
 })
 

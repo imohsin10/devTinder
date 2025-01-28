@@ -14,7 +14,9 @@
   "author": "me",
   "license": "ISC",
   "dependencies": {
+    "email-validator": "^2.0.4",
     "express": "^4.21.1",
-    "mongoose": "^8.8.1"
+    "mongoose": "^8.8.1",
+    "validator": "^13.12.0"
   }
 }
