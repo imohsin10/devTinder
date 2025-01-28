@@ -8,33 +8,34 @@ app.get('/user',async (req,res)=>{
    try{
     const userEmail=req.body.emailId;
     console.log(userEmail)
-    const user= await User.findOne({emailId:userEmail});
-    console.log(user)
-    res.send(user)
-
-   }catch(err){
+    const users= await User.findOne({emailId:userEmail});
+  if(!users){
+    res.status(404).send("user not found")
+  }else{
+    res.send(users)
+  }
+ }catch(err){
     res.status(404).send("something went wrong")
    }
 
 
 })
-app.delete('/user',async (req,res)=>{
-   try {
-    Userid=req.body.serid
-    User.findByIdAndDelete(Userid);
-    //User.findByIdAndDelete({_id:Userid});
-res.send("data deleted successfully")
+// app.delete('/user',async (req,res)=>{
+//    try {
+//     Userid=req.body.serid
+//     User.findByIdAndDelete(Userid);
+//     //User.findByIdAndDelete({_id:Userid});
+// res.send("data deleted successfully")
 
-   }catch(err){
-    res.send("something went wrong")
-   }
-})
+//    }catch(err){
+//     res.send("something went wrong")
+//    }
+// })
 app.get('/feed',async (req,res)=>{
     try{
    
-     const user= await User.find({});
-     console.log(user)
-     res.send(user)
+     const users= await User.find({});
+     res.send(users)
  
     }catch(err){
      res.status(404).send("something went wrong")
@@ -51,7 +52,7 @@ app.post('/signup',async(req,res)=>{
     try{
        
         await user.save()
-    res.send('user added')
+    res.send('user added successfully')
     }catch(err){
         res.status(400).send("something went wring"+err.message)
     }
