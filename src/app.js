@@ -2,9 +2,11 @@ const express = require('express');
 const { connectDB } = require('./config/database')
 const User = require('./models/user')
 const { validateSignupData, validateLoginData } = require('../src/utils/validation')
+const {userAuth}=require('../middleware/auth')
 const bcrypt = require('bcrypt');
 const cookieParser = require('cookie-parser')
 const jwt = require('jsonwebtoken');
+const user = require('./models/user');
 const app = express();
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
@@ -51,8 +53,8 @@ app.post('/login', async (req, res) => {
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (isPasswordValid) {
-            const token = jwt.sign({ _id: user._id }, 'mohsin@123',);
-            res.cookie('token', token)
+            const token = jwt.sign({ _id: user._id }, 'mohsin@123',{ expiresIn: '1d' });
+            res.cookie('token', token,{ expires: new Date(Date.now() + 900000)})
             res.status(200).send("login succesfully")
         }
         else {
@@ -66,25 +68,20 @@ app.post('/login', async (req, res) => {
 
 
 })
-app.get('/profile', async (req, res) => {
+app.get('/profile',userAuth, async (req, res) => {
    try{
-    const cookie = req.cookies;
-    const { token } = cookie;
-    if (!token) {
-        throw new Error("invalid token")
-    }
+    const user=req.user;
 
     //valifate token 
-    const decoded = await jwt.verify(token, 'mohsin@123');
-    const { _id } = decoded;
-    const user=await User.findById({_id});
-    if(!user){
-        throw new Error("invalid token")
-    }
     res.status(200).send(user)
    }catch(err){
     res.status(400).send("Error " + err.message)
    }
+})
+app.post('/sendconnectionRequest',userAuth,(req,res)=>{
+    const user=req.user;
+   
+    res.send(user.firstName+" send the connection request")
 })
 
 app.get('/user', async (req, res) => {
