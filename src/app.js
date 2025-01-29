@@ -1,8 +1,68 @@
 const express = require('express');
 const { connectDB } = require('./config/database')
-const app = express();
 const User = require('./models/user')
+const { validateSignupData ,validateLoginData} = require('../src/utils/validation')
+const bcrypt = require('bcrypt');
+const app = express();
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }));
+
+
+
+app.post('/signup', async (req, res) => {
+
+
+
+    try {
+        //validate the data
+        validateSignupData(req.body)
+
+        // encrypt the password
+        const { firstName, lastName, emailId, password } = req.body;
+        const hashPassword = await bcrypt.hash(password, 10)
+        // Store hash in your password DB.;
+
+        const user = new User(
+            {
+                firstName,
+                lastName,
+                emailId,
+                password: hashPassword
+            }
+        )
+
+        await user.save()
+        res.send('user added successfully')
+    } catch (err) {
+        res.status(400).send("Error " + err.message)
+    }
+})
+app.post('/login',async(req,res)=>{
+    try{
+        validateLoginData(req.body)
+        const {emailId,password}=req.body;
+        const user= await User.findOne({emailId:emailId})
+        
+        if(!user){
+            throw new Error("invalid credential");
+        }
+        const isPasswordValid=await bcrypt.compare(password, user.password);
+        console.log(isPasswordValid)
+
+        if(isPasswordValid){
+            res.status(200).send("login succesfully") 
+        }
+        else{
+            throw new Error("invalid credential");
+        }
+
+
+    }catch(err){
+        res.status(400).send("Error " + err.message)  
+    }
+
+
+})
 
 app.get('/user', async (req, res) => {
     try {
@@ -51,7 +111,7 @@ app.patch('/user/:userId', async (req, res) => {
 
     try {
 
-        const ALLOWED_UPDATES = ["skills","age", "gender", "photoUrl", "aboutMe", "password", "firstName", "lastName",]
+        const ALLOWED_UPDATES = ["skills", "age", "gender", "photoUrl", "aboutMe", "password", "firstName", "lastName",]
 
         const isUpdateAllowed = Object.keys(data).every((k) =>
             ALLOWED_UPDATES.includes(k)
@@ -62,7 +122,7 @@ app.patch('/user/:userId', async (req, res) => {
             throw new Error("update not allowed")
         }
         if (data.skills?.length > 10) {
-          throw new Error ("skills cant be more than 10")
+            throw new Error("skills cant be more than 10")
         }
         await User.findByIdAndUpdate({ _id: userId }, req.body, { runValidators: true })
         console.log(req.body)
@@ -73,19 +133,7 @@ app.patch('/user/:userId', async (req, res) => {
 
 })
 
-app.post('/signup', async (req, res) => {
-    const user = new User(
-        req.body
-    )
 
-    try {
-
-        await user.save()
-        res.send('user added successfully')
-    } catch (err) {
-        res.status(400).send("something went wring" + err.message)
-    }
-})
 
 
 
