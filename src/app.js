@@ -1,12 +1,14 @@
 const express = require('express');
 const { connectDB } = require('./config/database')
 const User = require('./models/user')
-const { validateSignupData ,validateLoginData} = require('../src/utils/validation')
+const { validateSignupData, validateLoginData } = require('../src/utils/validation')
 const bcrypt = require('bcrypt');
+const cookieParser = require('cookie-parser')
+const jwt = require('jsonwebtoken');
 const app = express();
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
-
+app.use(cookieParser())
 
 
 app.post('/signup', async (req, res) => {
@@ -37,31 +39,52 @@ app.post('/signup', async (req, res) => {
         res.status(400).send("Error " + err.message)
     }
 })
-app.post('/login',async(req,res)=>{
-    try{
+app.post('/login', async (req, res) => {
+    try {
         validateLoginData(req.body)
-        const {emailId,password}=req.body;
-        const user= await User.findOne({emailId:emailId})
-        
-        if(!user){
+        const { emailId, password } = req.body;
+        const user = await User.findOne({ emailId: emailId })
+
+        if (!user) {
             throw new Error("invalid credential");
         }
-        const isPasswordValid=await bcrypt.compare(password, user.password);
-        console.log(isPasswordValid)
+        const isPasswordValid = await bcrypt.compare(password, user.password);
 
-        if(isPasswordValid){
-            res.status(200).send("login succesfully") 
+        if (isPasswordValid) {
+            const token = jwt.sign({ _id: user._id }, 'mohsin@123',);
+            res.cookie('token', token)
+            res.status(200).send("login succesfully")
         }
-        else{
+        else {
             throw new Error("invalid credential");
         }
 
 
-    }catch(err){
-        res.status(400).send("Error " + err.message)  
+    } catch (err) {
+        res.status(400).send("Error " + err.message)
     }
 
 
+})
+app.get('/profile', async (req, res) => {
+   try{
+    const cookie = req.cookies;
+    const { token } = cookie;
+    if (!token) {
+        throw new Error("invalid token")
+    }
+
+    //valifate token 
+    const decoded = await jwt.verify(token, 'mohsin@123');
+    const { _id } = decoded;
+    const user=await User.findById({_id});
+    if(!user){
+        throw new Error("invalid token")
+    }
+    res.status(200).send(user)
+   }catch(err){
+    res.status(400).send("Error " + err.message)
+   }
 })
 
 app.get('/user', async (req, res) => {
@@ -82,7 +105,6 @@ app.get('/user', async (req, res) => {
 app.delete('/user', async (req, res) => {
     try {
         const Userid = req.body.userId
-        console.log(Userid)
         const user = await User.findByIdAndDelete(Userid);
         // User.findByIdAndDelete({_id:Userid});
 
@@ -107,7 +129,6 @@ app.get('/feed', async (req, res) => {
 app.patch('/user/:userId', async (req, res) => {
     const userId = req.params.userId;
     const data = req.body;
-    console.log(userId)
 
     try {
 
@@ -125,7 +146,6 @@ app.patch('/user/:userId', async (req, res) => {
             throw new Error("skills cant be more than 10")
         }
         await User.findByIdAndUpdate({ _id: userId }, req.body, { runValidators: true })
-        console.log(req.body)
         res.status(200).send("user updated successfully")
     } catch (err) {
         res.status(404).send("something went wrong " + err.message)
