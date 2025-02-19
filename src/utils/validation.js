@@ -1,5 +1,6 @@
 const { request } = require('express')
 const validator = require('validator')
+const bcrypt = require('bcrypt');
 
 
 const validateSignupData = (data) => {
@@ -31,6 +32,7 @@ const validateProfileEditData=(req)=>{
     return isUpdateAllowed;
 
 }
+
 module.exports={
     validateSignupData,
     validateLoginData,

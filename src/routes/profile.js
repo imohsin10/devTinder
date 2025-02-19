@@ -1,42 +1,65 @@
-const express=require('express')
-const router=express.Router()
+const express = require('express')
+const router = express.Router()
 const User = require('../models/user')
-const { validateSignupData, validateLoginData ,validateProfileEditData} = require('../utils/validation')
-const {userAuth}=require('../../middleware/auth')
-router.get('/profile',userAuth, async (req, res) => {
-    try{
-     const user=req.user;
-      console.log(req)
-     //validate token 
-     res.status(200).send(user)
-    }catch(err){
-     res.status(400).send("Error " + err.message)
+const bcrypt = require('bcrypt');
+const { validateSignupData, validateLoginData, validateProfileEditData } = require('../utils/validation')
+const { userAuth } = require('../../middleware/auth')
+router.get('/profile', userAuth, async (req, res) => {
+    try {
+        const user = req.user;
+        console.log(req)
+        //validate token 
+        res.status(200).send(user)
+    } catch (err) {
+        res.status(400).send("Error " + err.message)
     }
- })
-router.patch('/profile/edit', userAuth ,async (req, res) => {
- 
-  try {
-     if(!validateProfileEditData(req)){
-        
-        throw new Error("invalid edit request")
-     }else{
-        const loggedInUser=req.user;
-        Object.keys(req.body).every((k) =>(loggedInUser[k]=req.body[k]))
-        await loggedInUser.save();
-        
+})
+router.patch('/profile/edit', userAuth, async (req, res) => {
 
-       
-        res.json({message:`${loggedInUser.firstName}, your profile updated successfully`,data:loggedInUser})
+    try {
+        if (!validateProfileEditData(req)) {
 
-     }
- 
-       
-        
-     } catch (err) {
-         res.status(404).send("something went wrong " + err.message)
-     }
- 
- })
+            throw new Error("invalid edit request")
+        } else {
+            const loggedInUser = req.user;
+            Object.keys(req.body).every((k) => (loggedInUser[k] = req.body[k]))
+            await loggedInUser.save();
+
+
+
+            res.json({ message: `${loggedInUser.firstName}, your profile updated successfully`, data: loggedInUser })
+
+        }
+
+
+
+    } catch (err) {
+        res.status(404).send("something went wrong " + err.message)
+    }
+
+})
+router.patch('/profile/password', userAuth, async (req, res) => {
+    try {
+
+        const loggedInUser = req.user
+        const { oldPassword, newPassword } = req.body
+        const isPasswordValid = await loggedInUser.validatePassword(oldPassword);
+        if (!isPasswordValid) {
+            throw new Error("invalid password")
+        } else {
+            const hashPassword = await bcrypt.hash(newPassword, 10)
+            console.log(hashPassword)
+            loggedInUser.password =hashPassword;
+            await loggedInUser.save()
+            res.json({ message: `${loggedInUser.firstName},your password updated successfully` })
+
+
+        }
+    } catch (err) {
+        res.status(404).send("something went wrong " + err.message)
+    }
+})
+
 router.get('/user', async (req, res) => {
     try {
         const userEmail = req.body.emailId;
@@ -76,4 +99,4 @@ router.get('/feed', async (req, res) => {
 
 
 })
-module.exports=router;
+module.exports = router;
