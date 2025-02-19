@@ -16,6 +16,7 @@ const adminAuth=(req,res,next)=>{
 const userAuth=async (req,res,next)=>{ 
   try {
     const {token}=req.cookies;
+  
     if(!token){
         throw new Error("invalid token")
     }
@@ -23,6 +24,7 @@ const userAuth=async (req,res,next)=>{
    const decodedToken= await jwt.verify(token, 'mohsin@123');
    const {_id}=decodedToken;
     const user= await User.findById({_id})
+
     if(!user){
         throw new error("invalid credential") 
     }else{

@@ -1,3 +1,4 @@
+const { request } = require('express')
 const validator = require('validator')
 
 
@@ -16,13 +17,22 @@ const validateSignupData = (data) => {
     }
 
 }
-const validateLoginData=(data)=>{
-    const {emailId}=data
+const validateLoginData=(req)=>{
+    const {emailId}=req
     if (!validator.isEmail(emailId)) {
         throw new Error(" Please enter vallid email")
     }
 }
+const validateProfileEditData=(req)=>{
+    const ALLOWED_UPDATES = ["skills", "age", "gender", "photoUrl", "aboutMe", "firstName", "lastName",]
+    const isUpdateAllowed = Object.keys(req.body).every((k) =>
+        ALLOWED_UPDATES.includes(k)
+    );
+    return isUpdateAllowed;
+
+}
 module.exports={
     validateSignupData,
     validateLoginData,
+    validateProfileEditData,
 }

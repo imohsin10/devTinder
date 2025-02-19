@@ -1,104 +1,22 @@
 const express = require('express');
 const { connectDB } = require('./config/database')
 const User = require('./models/user')
-const { validateSignupData, validateLoginData } = require('../src/utils/validation')
+const app = express();
 const {userAuth}=require('../middleware/auth')
 const bcrypt = require('bcrypt');
 const cookieParser = require('cookie-parser')
 const jwt = require('jsonwebtoken');
-const user = require('./models/user');
-const app = express();
+const authrouter=require('./routes/auth')
+const profilerouter=require('./routes/profile')
+const requestrouter=require('./routes/request')
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser())
+app.use('/',authrouter)
+app.use('/',profilerouter)
+app.use('/',requestrouter)
 
-
-app.post('/signup', async (req, res) => {
-
-
-
-    try {
-        //validate the data
-        validateSignupData(req.body)
-
-        // encrypt the password
-        const { firstName, lastName, emailId, password } = req.body;
-        const hashPassword = await bcrypt.hash(password, 10)
-        // Store hash in your password DB.;
-
-        const user = new User(
-            {
-                firstName,
-                lastName,
-                emailId,
-                password: hashPassword
-            }
-        )
-
-        await user.save()
-        res.send('user added successfully')
-    } catch (err) {
-        res.status(400).send("Error " + err.message)
-    }
-})
-app.post('/login', async (req, res) => {
-    try {
-        validateLoginData(req.body)
-        const { emailId, password } = req.body;
-        const user = await User.findOne({ emailId: emailId })
-
-        if (!user) {
-            throw new Error("invalid credential");
-        }
-        const isPasswordValid = await user.validatePassword(password);
-
-        if (isPasswordValid) {
-            const token = await user.getJWT()
-            res.cookie('token', token,{ expires: new Date(Date.now() + 900000)})
-            res.status(200).send("login succesfully")
-        }
-        else {
-            throw new Error("invalid credential");
-        }
-
-
-    } catch (err) {
-        res.status(400).send("Error " + err.message)
-    }
-
-
-})
-app.get('/profile',userAuth, async (req, res) => {
-   try{
-    const user=req.user;
-
-    //valifate token 
-    res.status(200).send(user)
-   }catch(err){
-    res.status(400).send("Error " + err.message)
-   }
-})
-app.post('/sendconnectionRequest',userAuth,(req,res)=>{
-    const user=req.user;
-   
-    res.send(user.firstName+" send the connection request")
-})
-
-app.get('/user', async (req, res) => {
-    try {
-        const userEmail = req.body.emailId;
-        const users = await User.findOne({ emailId: userEmail });
-        if (!users) {
-            res.status(404).send("user not found")
-        } else {
-            res.send(users)
-        }
-    } catch (err) {
-        res.status(404).send("something went wrong")
-    }
-
-
-})
 app.delete('/user', async (req, res) => {
     try {
         const Userid = req.body.userId
