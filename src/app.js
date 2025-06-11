@@ -6,17 +6,18 @@ const {userAuth}=require('../middleware/auth')
 const bcrypt = require('bcrypt');
 const cookieParser = require('cookie-parser')
 const jwt = require('jsonwebtoken');
-const authrouter=require('./routes/auth')
-const profilerouter=require('./routes/profile')
-const requestrouter=require('./routes/request')
+const authRouter=require('./routes/auth')
+const profileRouter=require('./routes/profile')
+const requestRouter=require('./routes/request')
+const userRouter=require('./routes/user')
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser())
-app.use('/',authrouter)
-app.use('/',profilerouter)
-app.use('/',requestrouter)
-
+app.use('/',authRouter)
+app.use('/',profileRouter)
+app.use('/',requestRouter)
+app.use('/',userRouter)
 app.delete('/user', async (req, res) => {
     try {
         const Userid = req.body.userId
@@ -29,18 +30,7 @@ app.delete('/user', async (req, res) => {
         res.send("something went wrong" + err.message)
     }
 })
-app.get('/feed', async (req, res) => {
-    try {
 
-        const users = await User.find({});
-        res.send(users)
-
-    } catch (err) {
-        res.status(404).send("something went wrong")
-    }
-
-
-})
 app.patch('/user/:userId', async (req, res) => {
     const userId = req.params.userId;
     const data = req.body;
@@ -73,7 +63,7 @@ app.patch('/user/:userId', async (req, res) => {
 
 
 connectDB().then(() => {
-    console.log('connected succefully')
+    console.log(' Database connected succefully')
     app.listen(3000, () => {
         console.log("server is succesfully running on port 3000")
     })

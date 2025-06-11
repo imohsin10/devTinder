@@ -52,7 +52,7 @@ router.patch('/profile/password', userAuth, async (req, res) => {
             loggedInUser.password =hashPassword;
             await loggedInUser.save()
             res.json({ message: `${loggedInUser.firstName},your password updated successfully` })
-
+           
 
         }
     } catch (err) {
